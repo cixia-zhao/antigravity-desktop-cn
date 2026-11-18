@@ -424,5 +424,8 @@
   "Use mujoco-playground-rl to create and train a quadruped joystick locomotion RL task on a new MuJoCo Menagerie robot": "使用 mujoco-playground-rl 为新的 MuJoCo Menagerie 机器人创建并训练四足摇杆运动强化学习任务",
   "Launch a live MuJoCo Studio simulation in this workspace": "在此工作区启动实时 MuJoCo Studio 仿真",
   "Create a SimReady MuJoCo asset in Blender from a product URL or reference photo": "根据产品 URL 或参考照片在 Blender 中创建 SimReady MuJoCo 资产",
-  "Audit an existing MuJoCo model.xml with the 10-scenario physics suite and fix any defects": "使用 10 场景物理测试套件审计现有的 MuJoCo model.xml 并修复缺陷"
+  "Audit an existing MuJoCo model.xml with the 10-scenario physics suite and fix any defects": "使用 10 场景物理测试套件审计现有的 MuJoCo model.xml 并修复缺陷",
+  "Give your AI agent 600,000+ real app screens, and the skills to use them.": "为您的 AI 智能体提供 600,000+ 真实应用界面截图及配套使用技能.",
+  "The product development system for teams and agents.": "面向团队与智能体的产品研发协作系统.",
+  "Add Auth0 authentication to any app: login, MFA, SSO, Organizations, RBAC, custom domains, and branding.": "为任意应用集成 Auth0 身份认证: 登录、MFA、SSO、组织管理、RBAC、自定义域名与品牌定制."
 }

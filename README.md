@@ -1,5 +1,10 @@
 # Antigravity 中文汉化引擎（Windows / macOS / Linux）
 
+> [!TIP]
+> **个人定制维护版说明（AI 智能体接手入口）**：
+> - 本仓库基于上游 [`Silas-02/antigravity-desktop-cn`](https://github.com/Silas-02/antigravity-desktop-cn) 深度定制，额外增强了 Linux `~/.local/opt/antigravity` 与代理包装脚本识别、**87 项 Electron 主进程原生系统弹窗 / SSH 断线与认证窗 / IDE 向导 / 桌面 HUD 汉化**（合计 107 项动态锚点全校验），并补充了 `v2.33.0` 新增内置技能与插件词条。
+> - **后续智能体接手维护、合并上游与版本升级 SOP 请直接阅读：[MAINTENANCE.md](./MAINTENANCE.md) 与 [AGENTS.md](./AGENTS.md)**。
+
 > **支持系统**：Windows / macOS / Linux（含 Ubuntu 等常见发行版）
 >
 > **语言支持**：简体中文

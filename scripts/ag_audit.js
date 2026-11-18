@@ -351,7 +351,7 @@ function extractEnginePatchSpecs() {
   if (startIdx === -1) return { sections: new Map(), anchors: [] };
   const body = code.slice(startIdx);
 
-  const sectionRe = /\/\/\s*\d+\.\s*(dist\/[A-Za-z0-9_.-]+\.js)\b/g;
+  const sectionRe = /\/\/\s*\d+(?:\.\d+)?\.?\s+(dist\/[A-Za-z0-9_./-]+\.js)\b/g;
   const headers = [];
   let hm;
   while ((hm = sectionRe.exec(body)) !== null) {
@@ -360,10 +360,13 @@ function extractEnginePatchSpecs() {
 
   const sections = new Map();
   const anchors = [];
+  const ctxMonitorIdx = body.indexOf('// 9.5 ');
+  const packIdx = body.indexOf('// 10.');
+  const fallbackEnd = ctxMonitorIdx !== -1 ? ctxMonitorIdx : packIdx;
 
   for (let i = 0; i < headers.length; i++) {
     const file = headers[i].file;
-    const end = i + 1 < headers.length ? headers[i + 1].index : body.indexOf('// 10.', headers[i].index);
+    const end = i + 1 < headers.length ? headers[i + 1].index : fallbackEnd;
     const block = body.slice(headers[i].index, end > headers[i].index ? end : body.length);
     const maskedBlock = maskNonCodeRegions(block);
     sections.set(file, block);

@@ -69,3 +69,8 @@
 - **挂载与隔离边界**：`context_monitor.js` 由 `localization_engine.js`（第 9.5 步）打包为 `dist/contextMonitor.js` 并通过 `ag-ctx:metrics` IPC 桥接；维护或升级引擎时须保留该挂载点。监控 UI 直接使用简体中文并挂载于带 `data-ag-localization-skip` 标记的 Shadow DOM 中，严禁将其界面文案录入 `dicts/*.json`。
 - **只读采集与动态模型映射**：指标采集必须经主进程内置 `./languageServer` 通道并保持流式白名单裁剪（不驻留对话/文件正文），严禁扫描或读取 `language_server` 二进制；模型显示名优先通过 `GetUserStatus` 动态获取客户端配置并辅以通用清洗，禁止硬编码特定内部占位符或第三方模型代号对照表。
 - **跨平台与自检要求**：路径分类正则与主进程探测逻辑须同时兼容 Windows、macOS 与 Linux，严禁写入硬编码系统路径或调用平台专属进程探测命令；修改 `context_monitor.js` 后须执行 `node -c context_monitor.js` 与 `node scripts/ag_audit.js check` 校验。
+
+## 9. 本定制仓库（Fork）交接与本机维护特别说明
+
+- **接手必读文档**：本仓库包含针对 Linux `~/.local/opt/antigravity` 拓扑、代理包装启动器保护以及 Electron 主进程原生弹窗/SSH/向导/HUD 深度汉化（共 107 项动态锚点）的定制增强。**任何智能体在接手维护、合并上游（`upstream`）或适配新版客户端前，必须先阅读 [`MAINTENANCE.md`](./MAINTENANCE.md)**。
+- **本机热部署例外说明**：当用户明确要求将最新修改部署到本机 Antigravity 且当前智能体运行于 Antigravity 会话内部时，允许使用 `node localization_engine.js --no-kill --brand-title english` 进行无中断热写入（严禁不带 `--no-kill` 直接执行，以免强杀当前宿主会话），写入后提示用户手动重启客户端生效。

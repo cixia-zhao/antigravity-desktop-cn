@@ -1213,5 +1213,8 @@
   "Insert into main conversation": "插入到主会话",
   "Unarchive the main conversation to insert": "取消归档主会话以插入",
   "Pull Requests": "拉取请求",
-  "Author": "作者"
+  "Author": "作者",
+  "Reveal in File Manager": "在文件管理器中显示",
+  "ONLY for the native-swarm worker whose brief says it is the narrator. It watches the board and keeps the facts behind the user's Overview (view.json) current. Coordinators and other workers: do not load this.": "仅限任务简报中指定为叙事者的原生蜂群工作节点使用. 它会持续观察消息板并保持用户概览 (view.json) 背后的事实数据处于最新状态. 协调者及其他工作节点: 请勿加载此技能.",
+  "What the coordinator writes so the Swarm UI's Overview can show the swarm's goal, its groups of work and a screenshot timeline. Load it before you brief and add the first workers to a swarm.": "说明协调者应如何编写内容，以便蜂群 UI 的概览页展示蜂群目标、工作分组及屏幕截图时间线. 请在向蜂群下达简报并添加首批工作节点之前加载此技能."
 }

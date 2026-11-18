@@ -2177,6 +2177,26 @@ function generateJs() {
                 "仅限任务简报中指定为监控员的原生蜂群工作节点使用. 它会按定时器检查整个蜂群是否处于停滞状态，并唤醒唯一能推动进展的成员打破僵局. 协调者及其他工作节点: 请勿加载此技能.",
                 "仅限任务简报中指定为监控员的原生蜂群工作节点使用."
             ]
+        },
+        {
+            source: 'swarm_narrator',
+            display: "蜂群叙事",
+            descriptions: [
+                "ONLY for the native-swarm worker whose brief says it is the narrator. It watches the board and keeps the facts behind the user's Overview (view.json) current. Coordinators and other workers: do not load this.",
+                "ONLY for the native-swarm worker whose brief says it is the narrator.",
+                "仅限任务简报中指定为叙事者的原生蜂群工作节点使用. 它会持续观察消息板并保持用户概览 (view.json) 背后的事实数据处于最新状态. 协调者及其他工作节点: 请勿加载此技能.",
+                "仅限任务简报中指定为叙事者的原生蜂群工作节点使用."
+            ]
+        },
+        {
+            source: 'swarm_pane',
+            display: "蜂群面板",
+            descriptions: [
+                "What the coordinator writes so the Swarm UI's Overview can show the swarm's goal, its groups of work and a screenshot timeline. Load it before you brief and add the first workers to a swarm.",
+                "What the coordinator writes so the Swarm UI's Overview can show the swarm's goal",
+                "说明协调者应如何编写内容，以便蜂群 UI 的概览页展示蜂群目标、工作分组及屏幕截图时间线. 请在向蜂群下达简报并添加首批工作节点之前加载此技能.",
+                "说明协调者应如何编写内容，以便蜂群 UI 的概览页展示蜂群目标"
+            ]
         }
     ];
 
@@ -7425,8 +7445,12 @@ function detectInstallationDir(manualDir, options = {}) {
 
         const addHomeCandidates = () => {
             for (const homeDir of homeDirs) {
+                addCandidate(path.join(homeDir, '.local', 'opt', 'antigravity'));
+                addCandidate(path.join(homeDir, '.local', 'opt', 'Antigravity'));
                 addCandidate(path.join(homeDir, '.local', 'share', 'antigravity'));
                 addCandidate(path.join(homeDir, '.local', 'share', 'Antigravity'));
+                addCandidate(path.join(homeDir, 'opt', 'antigravity'));
+                addCandidate(path.join(homeDir, 'opt', 'Antigravity'));
                 addCandidate(path.join(homeDir, 'antigravity'));
                 addCandidate(path.join(homeDir, 'Antigravity'));
                 addCandidate(path.join(homeDir, '.local', 'share', 'flatpak', 'app', 'com.antigravity', 'current', 'active', 'files', 'share', 'antigravity'));
@@ -7466,11 +7490,21 @@ function detectInstallationDir(manualDir, options = {}) {
                     addCandidate(path.dirname(realP));
                     try {
                         const fileContent = fs.readFileSync(realP, 'utf-8');
-                        const scriptMatch = fileContent.match(/(?:\/opt|\/usr|\/home\/[^\s'"]+)\/[^\s'"]*antigravity[^\s'"]*/i);
-                        if (scriptMatch && fs.existsSync(scriptMatch[0])) {
-                            let target = scriptMatch[0];
-                            try { target = fs.realpathSync(target); } catch (e) {}
-                            addCandidate(fs.statSync(target).isDirectory() ? target : path.dirname(target));
+                        const expandedVariants = [fileContent];
+                        for (const hd of homeDirs) {
+                            expandedVariants.push(
+                                fileContent
+                                    .replace(/\$\{HOME\}|\$HOME/g, hd)
+                                    .replace(/(^|[\s'"])~\//gm, `$1${hd}/`)
+                            );
+                        }
+                        for (const variant of expandedVariants) {
+                            const scriptMatch = variant.match(/(?:\/opt|\/usr|\/home\/[^\s'"]+)\/[^\s'"]*antigravity[^\s'"]*/i);
+                            if (scriptMatch && fs.existsSync(scriptMatch[0])) {
+                                let target = scriptMatch[0];
+                                try { target = fs.realpathSync(target); } catch (e) {}
+                                addCandidate(fs.statSync(target).isDirectory() ? target : path.dirname(target));
+                            }
                         }
                     } catch (e) {}
                 }
@@ -8112,12 +8146,22 @@ ${translationJs}
     // 7. dist/main.js
     const mainBuf = AsarArchive.readFile(sourceAsar, "dist/main.js");
     if (mainBuf) {
-        console.log(`[修改] 正在向 main.js 注入主进程 WSL 提示汉化...`);
+        console.log(`[修改] 正在向 main.js 注入主进程弹窗及菜单汉化...`);
         const mainContent = cleanMainJsContent(mainBuf.toString('utf-8'))
+            .replace("await electron_1.dialog.showErrorBox('Binary not found', msg);", "await electron_1.dialog.showErrorBox('未找到二进制文件', msg);")
+            .replace("title: 'WSL distro not found',", "title: '未找到 WSL 分发版',")
+            .replace("message: `The WSL distro \"${WSL_DISTRO}\" is no longer installed.`,", "message: `WSL 分发版 \"${WSL_DISTRO}\" 已不再安装。`,")
+            .replace("detail: 'Antigravity opened on Windows instead.',", "detail: '已改为在 Windows 本地打开 Antigravity。',")
             .replace("await electron_1.dialog.showErrorBox('WSL setup failed', msg);", "await electron_1.dialog.showErrorBox('WSL 设置失败', msg);")
-            .replace("`Failed to install the server into WSL distro \"${WSL_DISTRO}\":\\n${err.message}`", "`未能将服务端安装至 WSL 分发版 \"${WSL_DISTRO}\"：\\n${err.message}`");
+            .replace("`Failed to install the server into WSL distro \"${WSL_DISTRO}\":\\n${err.message}`", "`未能将服务端安装至 WSL 分发版 \"${WSL_DISTRO}\"：\\n${err.message}`")
+            .replace("await electron_1.dialog.showErrorBox('Startup failed', msg);", "await electron_1.dialog.showErrorBox('启动失败', msg);")
+            .replace("label: 'New Window',", "label: '新建窗口',")
+            .replace("buttons: ['Cancel', 'Quit'],", "buttons: ['取消', '退出'],")
+            .replace("title: 'Confirm Quit',", "title: '确认退出',")
+            .replace("message: 'Are you sure you want to quit?',", "message: '确定要退出吗？',")
+            .replace("detail: 'There may be agents or background tasks running.',", "detail: '当前可能有智能体或后台任务正在运行。',");
         filePatches["dist/main.js"] = mainContent;
-        console.log(`[修改] 主进程 WSL 提示注入成功！`);
+        console.log(`[修改] 主进程弹窗及菜单汉化注入成功！`);
     }
 
     // 8. dist/utils.js
@@ -8234,6 +8278,7 @@ ${translationJs}
         "Show in File Manager": "在文件管理器中显示",
         "Reveal in File Explorer": "在文件资源管理器中显示",
         "Reveal in Finder": "在 Finder 中显示",
+        "Reveal in File Manager": "在文件管理器中显示",
         "Delete Project": "删除项目",
         "Split Right": "向右拆分",
         "Split Down": "向下拆分",
@@ -8300,12 +8345,154 @@ ${translationJs}
         items = translateIpcContextMenuItems(items);
     }
     ${IPC_CONTEXT_MENU_SIGNATURE_END}`;
-            filePatches["dist/ipcHandlers.js"] = ipcCleaned.replace(matchedHeader, replacementHeader);
-            console.log(`[修改] 原生右键菜单汉化注入成功！`);
+            filePatches["dist/ipcHandlers.js"] = ipcCleaned
+                .replace(matchedHeader, replacementHeader)
+                .replace("electron_1.dialog.showErrorBox('Cannot open folder', t.error);", "electron_1.dialog.showErrorBox('无法打开文件夹', t.error);")
+                .replace("message: 'Folder is on the Windows filesystem',", "message: '文件夹位于 Windows 文件系统上',")
+                .replace("title: 'Open workspace',", "title: '打开工作区',")
+                .replace("title: 'Open workspaces',", "title: '打开多个工作区',")
+                .replace("title: 'Select Download Folder',", "title: '选择下载文件夹',");
+            console.log(`[修改] 原生右键菜单及对话框汉化注入成功！`);
         } else {
             console.warn(`[警告] 未能在 ipcHandlers.js 中找到 buildContextMenuTemplate 函数的插入点。`);
         }
     }
+
+    // 9.1 dist/webviewPopupSecurity.js
+    const popupSecBuf = AsarArchive.readFile(sourceAsar, "dist/webviewPopupSecurity.js");
+    if (popupSecBuf) {
+        let popupSecContent = popupSecBuf.toString('utf-8')
+            .replace("insecure: 'Not secure',", "insecure: '不安全',")
+            .replace("dangerous: '⚠ Not secure',", "dangerous: '⚠ 不安全',")
+            .replace("'Your connection to this site is not secure',", "'您与此网站的连接不安全',")
+            .replace("'Connection is secure',", "'连接安全',")
+            .replace("'Connection security information is not available for this page'", "'无法获取此页面的连接安全信息'")
+            .replace("state.level === 'secure' ? 'Certificate is valid' : 'Certificate details'", "state.level === 'secure' ? '证书有效' : '证书详情'")
+            .replace("label: 'Connection info…',", "label: '连接信息…',")
+            .replace("title: 'Connection info',", "title: '连接信息',")
+            .replace("buttons: ['OK'],", "buttons: ['确定'],");
+        filePatches["dist/webviewPopupSecurity.js"] = popupSecContent;
+    }
+
+    // 9.2 dist/deviceChooser.js
+    const deviceChooserBuf = AsarArchive.readFile(sourceAsar, "dist/deviceChooser.js");
+    if (deviceChooserBuf) {
+        let deviceChooserContent = deviceChooserBuf.toString('utf-8')
+            .replace("hid: 'HID device',", "hid: 'HID 设备',")
+            .replace("usb: 'USB device',", "usb: 'USB 设备',")
+            .replace("serial: 'serial port',", "serial: '串行端口',")
+            .replace("title: 'Connect a device',", "title: '连接设备',")
+            .replace("message: `${origin} wants to connect to a ${KIND_NOUNS[kind]}`,", "message: `${origin} 想要连接到 ${KIND_NOUNS[kind]}`,")
+            .replace("'Select a device:'", "'请选择设备：'")
+            .replace("'No compatible devices found.'", "'未找到兼容设备。'")
+            .replace("buttons: [...snapshot.map(({ label }) => label), 'Cancel'],", "buttons: [...snapshot.map(({ label }) => label), '取消'],");
+        filePatches["dist/deviceChooser.js"] = deviceChooserContent;
+    }
+
+    // 9.3 dist/webauthn.js
+    const webauthnBuf = AsarArchive.readFile(sourceAsar, "dist/webauthn.js");
+    if (webauthnBuf) {
+        let webauthnContent = webauthnBuf.toString('utf-8')
+            .replace("title: 'Choose a Passkey',", "title: '选择通行密钥',")
+            .replace("message: `Sign in to ${rpLabel}`,", "message: `登录 ${rpLabel}`,")
+            .replace("detail: 'Select a passkey account to continue:',", "detail: '请选择要继续使用的通行密钥账户：',")
+            .replace("buttons: [...accountLabels, 'Cancel'],", "buttons: [...accountLabels, '取消'],");
+        filePatches["dist/webauthn.js"] = webauthnContent;
+    }
+
+    // 9.4 dist/ideInstall/wizardHtml.js
+    const wizardHtmlBuf = AsarArchive.readFile(sourceAsar, "dist/ideInstall/wizardHtml.js");
+    if (wizardHtmlBuf) {
+        let wizardHtmlContent = wizardHtmlBuf.toString('utf-8')
+            .replace("<title>Welcome to Antigravity</title>", "<title>欢迎使用 Antigravity</title>")
+            .replace(">Setting up…</div>", ">正在设置…</div>")
+            .replace("<h1>Welcome to the new Antigravity!</h1>", "<h1>欢迎使用全新 Antigravity！</h1>")
+            .replace("<p>Antigravity has been redesigned to put agents first with new capabilities. If you'd still like a code editor, you can download it as a separate app named <b>Antigravity IDE</b>.</p>", "<p>Antigravity 已全新重构，以智能体为核心并带来全新能力。如果您仍需要代码编辑器，可以下载独立应用 <b>Antigravity IDE</b>。</p>")
+            .replace("<span>Download the Antigravity IDE</span>", "<span>下载 Antigravity IDE</span>")
+            .replace('<button class="btn-primary" id="btn-skip">Explore the new Antigravity</button>', '<button class="btn-primary" id="btn-skip">探索全新 Antigravity</button>');
+        filePatches["dist/ideInstall/wizardHtml.js"] = wizardHtmlContent;
+    }
+
+    // 9.41 dist/remote/disconnectedPage.js
+    const discPageBuf = AsarArchive.readFile(sourceAsar, "dist/remote/disconnectedPage.js");
+    if (discPageBuf) {
+        let discPageContent = discPageBuf.toString('utf-8')
+            .replace("reconnect: 'Reconnect',", "reconnect: '重新连接',")
+            .replace("stop: 'Stop Server',", "stop: '停止服务端',")
+            .replace("close: 'Close',", "close: '关闭',")
+            .replace("? 'Restarting…'", "? '正在重启…'")
+            .replace("? 'Reconnecting…'\n            : 'Disconnected';", "? '正在重新连接…'\n            : '已断开连接';")
+            .replace("`Restarting the Antigravity server on ${host}…`", "`正在重启 ${host} 上的 Antigravity 服务端…`")
+            .replace("`Reconnecting to ${host}…`", "`正在重新连接到 ${host}…`")
+            .replace("`Disconnected from ${host}`", "`已从 ${host} 断开连接`")
+            .replace("'This window opens it again once it has started.'", "'服务端启动后，此窗口将自动重新打开。'")
+            .replace("`Its server on ${host} stopped, and its agents with it.`", "`${host} 上的服务端已停止，其智能体也已随之停止。`")
+            .replace("`Agents keep running on ${host}.`", "`智能体仍在 ${host} 上继续运行。`")
+            .replace("`Its agents on ${host} stopped with it.`", "`${host} 上的智能体已随之停止。`")
+            .replace("`Agents keep running on ${host} unless its server stopped.`", "`除非服务端停止，否则智能体仍会在 ${host} 上继续运行。`");
+        filePatches["dist/remote/disconnectedPage.js"] = discPageContent;
+    }
+
+    // 9.42 dist/remote/remoteManager.js
+    const remoteMgrBuf = AsarArchive.readFile(sourceAsar, "dist/remote/remoteManager.js");
+    if (remoteMgrBuf) {
+        let remoteMgrContent = remoteMgrBuf.toString('utf-8')
+            .replace("title: 'Choose an SSH config file',", "title: '选择 SSH 配置文件',")
+            .replace("title: 'Choose another SSH config file',", "title: '选择其他 SSH 配置文件',")
+            .replace("buttons: ['Choose Another File…', 'Cancel'],", "buttons: ['选择其他文件…', '取消'],")
+            .replace("title: 'SSH connection failed',", "title: 'SSH 连接失败',")
+            .replace("title: 'Could not restart the SSH server',", "title: '无法重启 SSH 服务端',")
+            .replace("buttons: ['Stop Server', 'Cancel'],", "buttons: ['停止服务端', '取消'],")
+            .replaceAll("title: 'Stop SSH server',", "title: '停止 SSH 服务端',")
+            .replace("message: `Stop the Antigravity server on ${entry.label}?`,", "message: `要停止 ${entry.label} 上的 Antigravity 服务端吗？`,")
+            .replace("buttons: ['Allow', \"Don't Allow\"],", "buttons: ['允许', '不允许'],")
+            .replace("title: 'Microphone access',", "title: '麦克风访问权限',")
+            .replace("message: `Allow ${label} to use your microphone?`,", "message: `允许 ${label} 使用您的麦克风吗？`,")
+            .replace("buttons: ['Sign In', 'Cancel'],", "buttons: ['登录', '取消'],")
+            .replace("buttons: ['Continue', 'Cancel'],", "buttons: ['继续', '取消'],")
+            .replace("buttons: ['Take Over', 'Cancel'],", "buttons: ['接管', '取消'],")
+            .replace("title: 'Shared home directory',", "title: '共享主目录',")
+            .replace("buttons: ['Restart', 'Later'],", "buttons: ['立即重启', '稍后'],")
+            .replace("title: 'Restart SSH server',", "title: '重启 SSH 服务端',");
+        filePatches["dist/remote/remoteManager.js"] = remoteMgrContent;
+    }
+
+    // 9.43 dist/remote/sshPrompts.js
+    const sshPromptsBuf = AsarArchive.readFile(sourceAsar, "dist/remote/sshPrompts.js");
+    if (sshPromptsBuf) {
+        let sshPromptsContent = sshPromptsBuf.toString('utf-8')
+            .replace("const TOUCH_TITLE = 'Touch your security key';", "const TOUCH_TITLE = '请轻触您的安全密钥';")
+            .replace('<p class="context">Connecting to <span id="label"></span></p>', '<p class="context">正在连接到 <span id="label"></span></p>')
+            .replace('<div id="retry" class="note" hidden>Asked again: your last answer may not have worked.</div>', '<div id="retry" class="note" hidden>再次请求验证：您上次输入的内容可能不正确。</div>')
+            .replace('<div id="long" class="note" role="alert" hidden>That\'s too long.</div>', '<div id="long" class="note" role="alert" hidden>输入内容过长。</div>')
+            .replace('<button id="cancel" class="secondary">Cancel</button><button id="continue" class="primary">Continue</button>', '<button id="cancel" class="secondary">取消</button><button id="continue" class="primary">继续</button>')
+            .replace("buttons: confirm ? ['Yes', 'No'] : ['Cancel'],", "buttons: confirm ? ['是', '否'] : ['取消'],");
+        filePatches["dist/remote/sshPrompts.js"] = sshPromptsContent;
+    }
+
+    // 9.44 dist/computer/hud.js
+    const hudBuf = AsarArchive.readFile(sourceAsar, "dist/computer/hud.js");
+    if (hudBuf) {
+        let hudContent = hudBuf.toString('utf-8')
+            .replace('<div id="status">AGY is controlling your Mac</div>', '<div id="status">AGY 正在控制您的电脑</div>')
+            .replace('<button id="stop">Stop</button><button id="resume">Resume</button>', '<button id="stop">停止</button><button id="resume">继续</button>')
+            .replace("end.textContent = 'Stopped';", "end.textContent = '已停止';")
+            .replace("end.textContent = 'Stop';", "end.textContent = '停止';");
+        filePatches["dist/computer/hud.js"] = hudContent;
+    }
+
+    // 9.45 dist/computer/hudState.js
+    const hudStateBuf = AsarArchive.readFile(sourceAsar, "dist/computer/hudState.js");
+    if (hudStateBuf) {
+        let hudStateContent = hudStateBuf.toString('utf-8')
+            .replace("'Agent paused — you have control'", "'智能体已暂停 — 当前由您控制'")
+            .replace("'Agent idle'", "'智能体空闲'")
+            .replace("`AGY working in ${name} (background)`", "`AGY 正在 ${name} 中运行 (后台)`")
+            .replace("'AGY working in the background'", "'AGY 正在后台运行'")
+            .replace("'AGY is controlling your Mac'", "'AGY 正在控制您的电脑'");
+        filePatches["dist/computer/hudState.js"] = hudStateContent;
+    }
+    console.log(`[修改] 扩展主进程原生弹窗、SSH 断线/认证页与桌面 HUD 汉化注入成功！`);
 
     // 9.5 上下文监控模块注入
     const contextMonitorPath = path.join(__dirname, "context_monitor.js");
@@ -8325,6 +8512,17 @@ ${translationJs}
             console.log(`[修改] 上下文监控模块注入成功！`);
         } catch (ctxErr) {
             console.warn(`[警告] 上下文监控模块校验失败，已跳过挂载: ${ctxErr.message}`);
+        }
+    }
+
+    for (const [patchKey, patchContent] of Object.entries(filePatches)) {
+        if (patchKey.endsWith('.js') && typeof patchContent === 'string') {
+            try {
+                new vm.Script(patchContent, { filename: patchKey });
+            } catch (patchSyntaxErr) {
+                console.error(`[致命错误] 模块 ${patchKey} 补丁语法校验失败，已中止注入: ${patchSyntaxErr.message}`);
+                return false;
+            }
         }
     }
 
@@ -8573,30 +8771,30 @@ function main() {
                         } catch (e) {}
                     }
                 } else {
-                    const exeCandidates = [
-                        path.join(installDir, 'antigravity'),
-                        path.join(installDir, 'Antigravity'),
-                        path.join(installDir, 'bin', 'antigravity'),
-                    ];
-                    for (const exePath of exeCandidates) {
-                        if (fs.existsSync(exePath)) {
-                            const child = child_process.spawn(exePath, [], { detached: true, stdio: 'ignore' });
+                    try {
+                        const whichOut = child_process.execSync('command -v antigravity 2>/dev/null || which antigravity 2>/dev/null || command -v Antigravity 2>/dev/null || which Antigravity 2>/dev/null || command -v agy 2>/dev/null || which agy 2>/dev/null', { encoding: 'utf-8' }).trim();
+                        if (whichOut && fs.existsSync(whichOut)) {
+                            const child = child_process.spawn(whichOut, [], { detached: true, stdio: 'ignore' });
                             child.unref();
                             console.log("[启动] 客户端启动成功！");
                             launched = true;
-                            break;
                         }
-                    }
+                    } catch (e) {}
                     if (!launched) {
-                        try {
-                            const whichOut = child_process.execSync('command -v antigravity 2>/dev/null || which antigravity 2>/dev/null || command -v Antigravity 2>/dev/null || which Antigravity 2>/dev/null || command -v agy 2>/dev/null || which agy 2>/dev/null', { encoding: 'utf-8' }).trim();
-                            if (whichOut) {
-                                const child = child_process.spawn(whichOut, [], { detached: true, stdio: 'ignore' });
+                        const exeCandidates = [
+                            path.join(installDir, 'antigravity'),
+                            path.join(installDir, 'Antigravity'),
+                            path.join(installDir, 'bin', 'antigravity'),
+                        ];
+                        for (const exePath of exeCandidates) {
+                            if (fs.existsSync(exePath)) {
+                                const child = child_process.spawn(exePath, [], { detached: true, stdio: 'ignore' });
                                 child.unref();
                                 console.log("[启动] 客户端启动成功！");
                                 launched = true;
+                                break;
                             }
-                        } catch (e) {}
+                        }
                     }
                 }
             }
